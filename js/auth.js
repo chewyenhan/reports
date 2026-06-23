@@ -52,11 +52,12 @@ async function fetchWithAuth(path, options = {}) {
 
 // 登录
 async function login(username, password) {
-  const data = await fetch(WORKER_URL + '/api/auth/login', {
+  const res = await fetch(WORKER_URL + '/api/auth/login', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ username, password }),
   });
+  const data = await res.json().catch(() => ({}));
   if (!data.token) {
     throw new Error(data.error || '登录失败');
   }
