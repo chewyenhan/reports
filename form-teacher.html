@@ -1,272 +1,64 @@
 <!DOCTYPE html>
 <html lang="zh" data-theme="light">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>班主任仪表盘 — 华联中学评语系统</title>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>华联中学高三孝评语系统 — 班主任仪表盘</title>
   <link rel="stylesheet" href="css/pico.min.css">
   <style>
-    :root {
-      --pico-primary: #1a56db;
-      --pico-primary-background: #1a56db;
-      --pico-primary-hover: #1e40af;
-      --pico-primary-hover-background: #1e40af;
-    }
-    .top-bar {
-      display: flex; justify-content: space-between; align-items: center;
-      flex-wrap: wrap; gap: 1rem;
-    }
-    .top-bar h1 { margin: 0; font-size: 1.5rem; }
-    .stat-card {
-      text-align: center; padding: 1.25rem;
-    }
-    .stat-card .number {
-      font-size: 2rem; font-weight: 800;
-      color: var(--pico-primary);
-    }
-    .stat-card .label {
-      font-size: 0.85rem; color: var(--pico-muted-color);
-    }
-    .subject-chip {
-      display: inline-block; padding: 3px 10px; border-radius: 99px;
-      font-size: 0.8rem; font-weight: 600;
-      margin: 2px;
-    }
-    .subject-chip.done { background: #dcfce7; color: #15803d; }
-    .subject-chip.half { background: #fef9c3; color: #a16207; }
-    .subject-chip.empty { background: #fee2e2; color: #b91c1c; }
-    .cell-done { color: #16a34a; font-size: 0.8rem; }
-    .cell-empty { color: #d1d5db; font-size: 0.8rem; }
-    .cell-text {
-      max-width: 150px; overflow: hidden; text-overflow: ellipsis;
-      white-space: nowrap; font-size: 0.85rem;
-    }
-    .links-table {
-      max-height: 500px; overflow-y: auto;
-    }
-    .link-url {
-      font-family: monospace; font-size: 0.8rem;
-      word-break: break-all;
-    }
+    :root { --pico-primary:#1a56db; --pico-primary-background:#1a56db; --pico-primary-hover:#1e40af; --pico-primary-hover-background:#1e40af; }
+    .top-bar { display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.5rem; }
+    .top-bar h1 { margin:0; font-size:1.5rem; }
+    .lang-bar { display:flex; justify-content:flex-end; gap:0.5rem; padding:0.25rem 0; }
+    .lang-bar button { font-size:0.8rem; padding:0.25rem 0.75rem; }
+    .stat-card { text-align:center; padding:1.25rem; }
+    .stat-card .number { font-size:2rem; font-weight:800; color:var(--pico-primary); }
+    .stat-card .label { font-size:0.85rem; color:var(--pico-muted-color); }
+    .cell-done { color:#16a34a; font-size:0.8rem; } .cell-empty { color:#d1d5db; font-size:0.8rem; }
+    .cell-text { max-width:150px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:0.85rem; }
+    .links-table { max-height:500px; overflow-y:auto; }
+    .link-url { font-family:monospace; font-size:0.8rem; word-break:break-all; }
+    .site-footer { text-align:center; padding:2rem 1rem 1rem; font-size:0.8rem; color:var(--pico-muted-color); }
   </style>
 </head>
 <body>
-  <main class="container-fluid" style="padding: 1rem 2rem;">
-
-    <!-- ═══ 顶部 ═══ -->
-    <div class="top-bar">
-      <div>
-        <h1>📊 班级评语总览</h1>
-        <small style="color:var(--pico-muted-color);">
-          你好，<strong id="teacherName">班主任</strong>
-        </small>
-      </div>
-      <div style="display:flex; gap:0.5rem;">
-        <button class="secondary outline" onclick="window.location.href='teacher-report.html'">
-          📝 录入评语
-        </button>
-        <button class="secondary outline" onclick="logout()">🚪 登出</button>
-      </div>
-    </div>
-    <hr>
-
-    <!-- ═══ 总体进度卡片 ═══ -->
+  <div class="lang-bar container-fluid" style="padding:0.5rem 2rem;"><button class="secondary outline" id="langToggle" onclick="toggleLang()">English</button></div>
+  <main class="container-fluid" style="padding:0.5rem 2rem 1rem;">
+    <div class="top-bar"><div><h1 data-i18n="dashboard.title">📊 班级评语总览</h1><small style="color:var(--pico-muted-color);" id="greeting"></small></div>
+      <div style="display:flex; gap:0.5rem;"><button class="secondary outline" onclick="window.location.href='teacher-report.html'" data-i18n="dashboard.enter_report">📝 录入评语</button><button class="secondary outline" onclick="logout()" data-i18n="report.logout">🚪 登出</button></div></div><hr>
     <div class="grid" style="margin-bottom:1.5rem;">
-      <article class="stat-card">
-        <div class="number" id="overallPct">--</div>
-        <div class="label">总体完成率</div>
-      </article>
-      <article class="stat-card">
-        <div class="number" id="overallFilled">--</div>
-        <div class="label">已填写 / 总计</div>
-      </article>
-      <article class="stat-card">
-        <div class="number" id="subjectCount">--</div>
-        <div class="label">科目总数</div>
-      </article>
-    </div>
-
-    <!-- ═══ 各科目进度卡片 ═══ -->
-    <h3>📋 各科目进度</h3>
-    <div class="grid" id="subjectCards" style="margin-bottom:2rem;"></div>
-
-    <!-- ═══ 全科矩阵表格 ═══ -->
-    <h3>📊 全科矩阵</h3>
-    <p style="color:var(--pico-muted-color); font-size:0.85rem;">
-      横向滚动查看全部科目。🟢已完成 🟡部分 🟠未填
-    </p>
-    <figure style="overflow-x:auto; -webkit-overflow-scrolling:touch; max-height:60vh; overflow-y:auto;">
-      <table class="striped" id="matrixTable" style="font-size:0.85rem;">
-        <thead id="matrixHead"></thead>
-        <tbody id="matrixBody">
-          <tr><td colspan="3" style="text-align:center;">加载中...</td></tr>
-        </tbody>
-      </table>
-    </figure>
-
-    <!-- ═══ 生成家长链接 ═══ -->
-    <hr style="margin-top:2rem;">
-    <h3>🔗 家长访问链接</h3>
-    <div style="display:flex; gap:0.75rem; align-items:center; flex-wrap:wrap; margin-bottom:1rem;">
-      <button onclick="doGenerateLinks()">🔄 生成/刷新链接</button>
-      <small style="color:var(--pico-muted-color);">
-        生成后把链接发给对应家长。每人一个唯一链接，只能看到自己孩子的评语。
-      </small>
-    </div>
-    <div class="links-table" id="linksContainer">
-      <p style="color:var(--pico-muted-color);">点击上方按钮生成链接</p>
-    </div>
-
-    <!-- ═══ 导出 ═══ -->
-    <hr>
-    <div style="display:flex; justify-content:flex-end; gap:0.5rem; margin-bottom:3rem;">
-      <button class="secondary" onclick="exportFullCSV()">📥 导出全科 CSV</button>
-      <button onclick="exportPerStudentCSV()">📥 按学生导出</button>
-    </div>
-
+      <article class="stat-card"><div class="number" id="overallPct">--</div><div class="label" data-i18n="dashboard.overall_pct">总体完成率</div></article>
+      <article class="stat-card"><div class="number" id="overallFilled">--</div><div class="label" data-i18n="dashboard.overall_filled">已填写 / 总计</div></article>
+      <article class="stat-card"><div class="number" id="subjectCount">--</div><div class="label" data-i18n="dashboard.subject_count">科目总数</div></article></div>
+    <h3 data-i18n="dashboard.subjects_progress">📋 各科目进度</h3><div class="grid" id="subjectCards" style="margin-bottom:2rem;"></div>
+    <h3 data-i18n="dashboard.matrix">📊 全科矩阵</h3><p style="color:var(--pico-muted-color);font-size:0.85rem;" data-i18n="dashboard.matrix_hint">横向滚动查看全部科目</p>
+    <figure style="overflow-x:auto;-webkit-overflow-scrolling:touch;max-height:60vh;overflow-y:auto;"><table class="striped" id="matrixTable" style="font-size:0.85rem;"><thead id="matrixHead"></thead><tbody id="matrixBody"><tr><td colspan="3" style="text-align:center;" data-i18n="dashboard.loading">加载中...</td></tr></tbody></table></figure>
+    <hr style="margin-top:2rem;"><h3>🔗 家长访问链接 / Parent Links</h3>
+    <div style="display:flex;gap:0.75rem;align-items:center;flex-wrap:wrap;margin-bottom:1rem;"><button onclick="doGenerateLinks()" data-i18n="dashboard.generate_links">🔄 生成/刷新链接</button><small style="color:var(--pico-muted-color);" data-i18n="dashboard.links_hint">生成后把链接发给对应家长。每人一个唯一链接，只能看到自己孩子的评语。</small></div>
+    <div class="links-table" id="linksContainer"><p style="color:var(--pico-muted-color);" data-i18n="dashboard.links_placeholder">点击上方按钮生成链接</p></div>
+    <hr><h3>🔑 修改教师密码 / Change Password</h3>
+    <div style="display:flex;gap:0.75rem;align-items:flex-end;flex-wrap:wrap;">
+      <div><label for="pwdTeacher"><small>选择教师</small></label><select id="pwdTeacher" style="min-width:200px;"><option value="form_teacher">👑 班主任</option><option value="chinese_t">📖 华语老师</option><option value="malay_t">📖 国语老师</option><option value="english_t">📖 英语老师</option><option value="math_t">🔢 数学老师</option><option value="computer_t">💻 电脑老师</option><option value="pe_t">🏃 体育老师</option><option value="robotics_t">🤖 机器人老师</option><option value="commerce_t">💼 商业老师</option><option value="economy_t">📈 经济老师</option><option value="account_t">🧮 会计老师</option><option value="history_t">📜 历史老师</option><option value="geography_t">🌏 地理老师</option><option value="art_t1">🎨 美术（平面设计+素描）</option><option value="art_t2">🎨 美术（综合创作+赏析+水彩）</option></select></div>
+      <div><label for="pwdNew"><small>新密码</small></label><input type="text" id="pwdNew" placeholder="输入新密码" style="min-width:160px;"></div>
+      <button onclick="doResetPassword()">🔄 重置密码</button><small id="pwdMsg" style="color:var(--pico-muted-color);"></small></div>
+    <hr><div style="display:flex;justify-content:flex-end;gap:0.5rem;margin-bottom:3rem;"><button class="secondary" onclick="exportFullCSV()" data-i18n="dashboard.export_full">📥 导出全科 CSV</button><button onclick="exportPerStudentCSV()" data-i18n="dashboard.export_per_student">📥 按学生导出</button></div>
   </main>
-
-  <script src="js/auth.js"></script>
-  <script src="js/report-api.js"></script>
+  <div class="site-footer" id="siteFooter" data-i18n="site.footer">© 2026 华联中学 · Hua Lian High School · CHEW YEN HAN 制作</div>
+  <script src="js/i18n.js"></script><script src="js/auth.js"></script><script src="js/report-api.js"></script>
   <script>
-    let summaryData = null;
-
-    (async function init() {
-      const auth = await requireAuth();
-      if (!auth) return;
-      if (auth.teacher.role !== 'form_teacher') {
-        alert('仅班主任可访问此页面。将跳转到评语录入页。');
-        window.location.href = 'teacher-report.html';
-        return;
-      }
-      document.getElementById('teacherName').textContent = auth.teacher.display_name;
-
-      try {
-        summaryData = await getSummary();
-        renderStats();
-        renderSubjectCards();
-        renderMatrix();
-      } catch (err) {
-        document.getElementById('matrixBody').innerHTML =
-          `<tr><td colspan="3" style="text-align:center;color:#dc2626;">加载失败: ${err.message}</td></tr>`;
-      }
-    })();
-
-    function renderStats() {
-      const p = summaryData.overall_progress;
-      document.getElementById('overallPct').textContent = p.percentage + '%';
-      document.getElementById('overallFilled').textContent = `${p.filled_cells} / ${p.total_cells}`;
-      document.getElementById('subjectCount').textContent = summaryData.subjects.length;
-    }
-
-    function renderSubjectCards() {
-      const container = document.getElementById('subjectCards');
-      container.innerHTML = summaryData.subjects.map(s => {
-        const pct = s.total_count > 0 ? Math.round((s.completed_count / s.total_count) * 100) : 0;
-        let cls = 'empty';
-        if (pct >= 90) cls = 'done';
-        else if (pct >= 30) cls = 'half';
-        return `<article>
-          <strong>${s.display_name}</strong>
-          <div style="display:flex; align-items:center; gap:0.5rem; margin-top:0.5rem;">
-            <progress value="${pct}" max="100" style="flex:1; height:10px;"></progress>
-            <small>${s.completed_count}/${s.total_count}</small>
-          </div>
-          <small style="color:var(--pico-muted-color);">负责老师: ${s.teacher_name || '-'}</small>
-        </article>`;
-      }).join('');
-    }
-
-    function renderMatrix() {
-      const subjects = summaryData.subjects;
-      const students = summaryData.students;
-
-      // 表头
-      document.getElementById('matrixHead').innerHTML =
-        `<tr>
-          <th style="position:sticky; left:0; background:inherit;">学生</th>
-          <th style="position:sticky; left:65px; background:inherit;">班</th>
-          ${subjects.map(s => `<th style="min-width:100px;">${s.display_name}</th>`).join('')}
-        </tr>`;
-
-      // 表体
-      document.getElementById('matrixBody').innerHTML = students.map(st => {
-        const cells = subjects.map(s => {
-          const r = st.subjects[s.code];
-          if (r && r.is_complete) {
-            return `<td><span class="cell-done" title="${r.feedback || ''}">✅</span>
-                    <span class="cell-text">${r.feedback || ''}</span></td>`;
-          } else if (r && r.feedback) {
-            return `<td>📝 <span class="cell-text">${r.feedback}</span></td>`;
-          } else {
-            return `<td><span class="cell-empty">—</span></td>`;
-          }
-        }).join('');
-        return `<tr>
-          <td style="position:sticky; left:0; background:var(--pico-background-color);">
-            <strong>${st.student_name}</strong></td>
-          <td style="position:sticky; left:65px; background:var(--pico-background-color);">
-            ${st.group_code}</td>
-          ${cells}
-        </tr>`;
-      }).join('');
-    }
-
-    async function doGenerateLinks() {
-      try {
-        const data = await generateLinks();
-        const container = document.getElementById('linksContainer');
-        container.innerHTML = `<table class="striped">
-          <thead><tr><th>学生</th><th>访问码</th><th>链接</th></tr></thead>
-          <tbody>${data.links.map(l => `<tr>
-            <td>${l.student_name}</td>
-            <td><code>${l.parent_code}</code></td>
-            <td><a href="${l.url}" target="_blank" class="link-url">${l.url}</a></td>
-          </tr>`).join('')}</tbody>
-        </table>`;
-      } catch (err) {
-        alert('生成失败: ' + err.message);
-      }
-    }
-
-    function exportFullCSV() {
-      const subjects = summaryData.subjects;
-      const students = summaryData.students;
-      const rows = [['学生', '分组', ...subjects.map(s => s.display_name)]];
-      students.forEach(st => {
-        rows.push([
-          st.student_name, st.group_code,
-          ...subjects.map(s => (st.subjects[s.code] && st.subjects[s.code].feedback) || ''),
-        ]);
-      });
-      downloadCSV(rows, '全科评语汇总.csv');
-    }
-
-    function exportPerStudentCSV() {
-      const subjects = summaryData.subjects;
-      const students = summaryData.students;
-      const rows = [['学生', '分组', '科目', '评语', '状态', '老师']];
-      students.forEach(st => {
-        subjects.forEach(s => {
-          const r = st.subjects[s.code];
-          rows.push([
-            st.student_name, st.group_code, s.display_name,
-            (r && r.feedback) || '', (r && r.is_complete) ? '完成' : '未完成',
-            (r && r.teacher_name) || '',
-          ]);
-        });
-      });
-      downloadCSV(rows, '按学生评语导出.csv');
-    }
-
-    function downloadCSV(rows, filename) {
-      const csv = '﻿' + rows.map(r => r.map(c => '"' + String(c).replace(/"/g, '""') + '"').join(',')).join('\n');
-      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url; a.download = filename; a.click();
-      URL.revokeObjectURL(url);
-    }
+    let summaryData=null;
+    (async function init(){ const auth=await requireAuth(); if(!auth)return; if(auth.teacher.role!=='form_teacher'){ alert('仅班主任可访问。'); window.location.href='teacher-report.html'; return; } document.getElementById('greeting').innerHTML=t('report.hello')+'，<strong>'+auth.teacher.display_name+'</strong>';
+      try{ summaryData=await getSummary(); renderAll(); }catch(err){ document.getElementById('matrixBody').innerHTML='<tr><td colspan="3" style="text-align:center;color:#dc2626;">'+t('dashboard.load_failed')+': '+err.message+'</td></tr>'; } })();
+    function onLangChange(){ if(summaryData)renderAll(); applyI18n(); const au=getUser(); if(au)document.getElementById('greeting').innerHTML=t('report.hello')+'，<strong>'+au.display_name+'</strong>'; }
+    function renderAll(){ renderStats(); renderSubjectCards(); renderMatrix(); }
+    function renderStats(){ const p=summaryData.overall_progress; document.getElementById('overallPct').textContent=p.percentage+'%'; document.getElementById('overallFilled').textContent=p.filled_cells+' / '+p.total_cells; document.getElementById('subjectCount').textContent=summaryData.subjects.length; }
+    function renderSubjectCards(){ document.getElementById('subjectCards').innerHTML=summaryData.subjects.map(s=>{ const pct=s.total_count>0?Math.round((s.completed_count/s.total_count)*100):0; return '<article><strong>'+s.display_name+'</strong><div style="display:flex;align-items:center;gap:0.5rem;margin-top:0.5rem;"><progress value="'+pct+'" max="100" style="flex:1;height:10px;"></progress><small>'+s.completed_count+'/'+s.total_count+'</small></div><small style="color:var(--pico-muted-color);">'+t('dashboard.teacher_col')+': '+(s.teacher_name||'-')+'</small></article>'; }).join(''); }
+    function renderMatrix(){ const subjects=summaryData.subjects,students=summaryData.students; document.getElementById('matrixHead').innerHTML='<tr><th style="position:sticky;left:0;background:inherit;">'+t('dashboard.student_col')+'</th><th style="position:sticky;left:65px;background:inherit;">'+t('report.col_group')+'</th>'+subjects.map(s=>'<th style="min-width:100px;">'+s.display_name+'</th>').join('')+'</tr>';
+      document.getElementById('matrixBody').innerHTML=students.map(st=>{ const cells=subjects.map(s=>{ const r=st.subjects[s.code]; if(r&&r.is_complete)return '<td><span class="cell-done" title="'+(r.feedback||'')+'">✅</span> <span class="cell-text">'+(r.feedback||'')+'</span></td>'; else if(r&&r.feedback)return '<td>📝 <span class="cell-text">'+r.feedback+'</span></td>'; else return '<td><span class="cell-empty">—</span></td>'; }).join(''); return '<tr><td style="position:sticky;left:0;background:var(--pico-background-color);"><strong>'+st.student_name+'</strong></td><td style="position:sticky;left:65px;background:var(--pico-background-color);">'+st.group_code+'</td>'+cells+'</tr>'; }).join(''); }
+    async function doGenerateLinks(){ try{ const data=await generateLinks(); document.getElementById('linksContainer').innerHTML='<table class="striped"><thead><tr><th>'+t('dashboard.student_col')+'</th><th>'+(getLang()==='zh'?'访问码':'Code')+'</th><th>'+(getLang()==='zh'?'链接':'Link')+'</th></tr></thead><tbody>'+data.links.map(l=>'<tr><td>'+l.student_name+'</td><td><code>'+l.parent_code+'</code></td><td><a href="'+l.url+'" target="_blank" class="link-url">'+l.url+'</a></td></tr>').join('')+'</tbody></table>'; }catch(err){ alert('生成失败: '+err.message); } }
+    async function doResetPassword(){ const u=document.getElementById('pwdTeacher').value,n=document.getElementById('pwdNew').value.trim(),m=document.getElementById('pwdMsg'); if(!n){m.textContent='⚠️ 请输入新密码';return;} if(n.length<4){m.textContent='⚠️ 密码至少4位';return;} try{ await resetPassword(u,n); m.textContent='✅ 密码已重置！新密码: '+n; document.getElementById('pwdNew').value=''; }catch(err){ m.textContent='❌ 失败: '+err.message; } }
+    function exportFullCSV(){ const subjects=summaryData.subjects,students=summaryData.students; const rows=[[t('dashboard.student_col'),t('report.col_group'),...subjects.map(s=>s.display_name)]]; students.forEach(st=>{ rows.push([st.student_name,st.group_code,...subjects.map(s=>(st.subjects[s.code]&&st.subjects[s.code].feedback)||'')]); }); downloadCSV(rows,'全科评语汇总.csv'); }
+    function exportPerStudentCSV(){ const subjects=summaryData.subjects,students=summaryData.students; const rows=[[t('dashboard.student_col'),t('report.col_group'),t('report.col_subject'),t('report.col_feedback'),t('report.col_status'),t('dashboard.teacher_col')]]; students.forEach(st=>{ subjects.forEach(s=>{ const r=st.subjects[s.code]; rows.push([st.student_name,st.group_code,s.display_name,(r&&r.feedback)||'',(r&&r.is_complete)?t('dashboard.completed'):t('dashboard.incomplete'),(r&&r.teacher_name)||'']); }); }); downloadCSV(rows,'按学生评语导出.csv'); }
+    function downloadCSV(rows,filename){ const csv='﻿'+rows.map(r=>r.map(c=>'"'+String(c).replace(/"/g,'""')+'"').join(',')).join('\n'); const b=new Blob([csv],{type:'text/csv;charset=utf-8'}); const u=URL.createObjectURL(b),a=document.createElement('a'); a.href=u; a.download=filename; a.click(); URL.revokeObjectURL(u); }
   </script>
 </body>
 </html>
