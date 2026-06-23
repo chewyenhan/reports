@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="zh" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>S3F 高三孝 — 学生评语系统 (Pico.css Demo)</title>
+  <link rel="stylesheet" href="css/pico.min.css">
+  <style>
+    /* ── 品牌色覆盖（华联中学蓝） ── */
+    :root {
+      --pico-primary: #1a56db;
+      --pico-primary-background: #1a56db;
+      --pico-primary-hover: #1e40af;
+      --pico-primary-hover-background: #1e40af;
+    }
+
+    /* ── 照片样式 ── */
+    .student-photo {
+      width: 60px; height: 80px;
+      object-fit: cover;
+      border-radius: var(--pico-border-radius);
+      border: 1px solid var(--pico-muted-border-color);
+    }
+    .no-photo {
+      width: 60px; height: 80px;
+      background: var(--pico-muted-border-color);
+      border-radius: var(--pico-border-radius);
+      display: inline-flex; align-items: center; justify-content: center;
+      font-size: 10px; color: var(--pico-muted-color);
+    }
+
+    /* ── 评语完成行 ── */
+    tr.row-done td { opacity: 0.6; }
+    tr.row-done textarea { border-color: #22c55e; background: #f0fdf4; }
+
+    /* ── 进度条 ── */
+    .progress-bar {
+      width: 100%; height: 12px;
+      background: var(--pico-muted-border-color);
+      border-radius: 99px; overflow: hidden;
+    }
+    .progress-fill {
+      height: 100%; background: var(--pico-primary-background);
+      border-radius: 99px;
+      transition: width 0.4s ease;
+    }
+
+    /* ── Live 徽章 ── */
+    .live-badge {
+      display: inline-flex; align-items: center; gap: 6px;
+      font-size: 0.8rem; font-weight: 600;
+      color: #16a34a;
+      background: #f0fdf4;
+      border: 1px solid #bbf7d0;
+      border-radius: 99px; padding: 4px 12px;
+    }
+    .live-dot {
+      width: 8px; height: 8px; background: #16a34a;
+      border-radius: 50%;
+      animation: pulse 1.5s ease-in-out infinite;
+    }
+    @keyframes pulse {
+      0%,100% { opacity:1; transform:scale(1); }
+      50% { opacity:0.3; transform:scale(0.65); }
+    }
+
+    /* ── 布局微调 ── */
+    .page-header {
+      display: flex; justify-content: space-between; align-items: center;
+      flex-wrap: wrap; gap: 1rem;
+    }
+    .control-bar {
+      display: flex; align-items: center; gap: 1rem;
+      flex-wrap: wrap;
+    }
+    textarea {
+      min-height: 70px; resize: vertical;
+    }
+    .footer-actions {
+      display: flex; justify-content: flex-end; gap: 0.75rem;
+      margin-top: 1.5rem;
+    }
+  </style>
+</head>
+<body>
+  <main class="container-fluid" style="padding: 1.5rem 2rem;">
+
+    <!-- ═══ 标题 ═══ -->
+    <div class="page-header">
+      <h1 style="margin-bottom:0;">📋 S3F 高三孝 — 学生评语</h1>
+      <span class="live-badge"><span class="live-dot"></span> LIVE AUTO-SYNC</span>
+    </div>
+    <p style="color:var(--pico-muted-color); margin-bottom:1.5rem;">
+      班级整体表现评估 / LAPORAN PRESTASI KELAS — 31 位学生 | S3FA 文商 25人 + S3FB 美班 6人
+    </p>
+
+    <!-- ═══ 控制栏 ═══ -->
+    <article style="padding:1rem 1.25rem; margin-bottom:1.5rem;">
+      <div class="control-bar">
+        <div class="grid" style="align-items:center; gap:0.5rem;">
+          <strong>科目 / Subjek:</strong>
+          <select id="subjectSelect" style="width:auto;">
+            <optgroup label="── 全科 (S3FA + S3FB) ──">
+              <option>华语 / Bahasa Cina</option>
+              <option>国语 / Bahasa Melayu</option>
+              <option>英语 / Bahasa Inggeris</option>
+              <option>基数/普数/高数</option>
+              <option>电脑 / Komputer</option>
+              <option>体育 / PJK</option>
+              <option>机器人 / Robotik</option>
+            </optgroup>
+            <optgroup label="── S3FA 文商班专属 ──">
+              <option>商业 / Perdagangan</option>
+              <option>经济 / Ekonomi</option>
+              <option>会计 / Perakaunan</option>
+              <option>历史 / Sejarah</option>
+              <option>地理 / Geografi</option>
+            </optgroup>
+            <optgroup label="── S3FB 美班专属 ──">
+              <option>平面设计 / Reka Bentuk</option>
+              <option>素描 / Lakaran</option>
+              <option>综合创作 / Karya Campuran</option>
+              <option>美术赏析 / Apresiasi Seni</option>
+              <option>水彩 / Cat Air</option>
+            </optgroup>
+          </select>
+        </div>
+        <div style="display:flex; align-items:center; gap:0.75rem; min-width:250px;">
+          <strong>进度:</strong>
+          <div class="progress-bar" style="flex:1;">
+            <div class="progress-fill" style="width:45%;"></div>
+          </div>
+          <span style="font-weight:700; white-space:nowrap;">14 / 31</span>
+        </div>
+      </div>
+    </article>
+
+    <!-- ═══ 学生表格 ═══ -->
+    <figure style="overflow-x:auto; -webkit-overflow-scrolling:touch;">
+      <table class="striped">
+        <thead>
+          <tr>
+            <th scope="col" style="width:50px;">No.</th>
+            <th scope="col" style="width:60px;">照片</th>
+            <th scope="col">学生姓名 / Nama Murid</th>
+            <th scope="col" style="width:50px;">班</th>
+            <th scope="col">评语 / Maklum Balas</th>
+            <th scope="col" style="width:60px;">✅</th>
+          </tr>
+        </thead>
+        <tbody>
+          <!-- S3FA 学生 (仅展示前几行做效果) -->
+          <tr>
+            <td>1</td>
+            <td><div class="no-photo">📷</div></td>
+            <td><strong>学生姓名 A (英文名 A)</strong></td>
+            <td><mark>A</mark></td>
+            <td><textarea placeholder="输入评语..."></textarea></td>
+            <td><input type="checkbox" aria-label="完成"></td>
+          </tr>
+          <tr class="row-done">
+            <td>2</td>
+            <td><div class="no-photo">📷</div></td>
+            <td><strong>学生姓名 B (英文名 B)</strong></td>
+            <td><mark>A</mark></td>
+            <td><textarea>上课认真，作业按时完成，继续保持！</textarea></td>
+            <td><input type="checkbox" checked aria-label="完成"></td>
+          </tr>
+          <tr>
+            <td>3</td>
+            <td><div class="no-photo">📷</div></td>
+            <td><strong>学生姓名 C (英文名 C)</strong></td>
+            <td><mark>A</mark></td>
+            <td><textarea placeholder="输入评语..."></textarea></td>
+            <td><input type="checkbox" aria-label="完成"></td>
+          </tr>
+          <!-- S3FB 学生 -->
+          <tr>
+            <td>26</td>
+            <td><div class="no-photo">📷</div></td>
+            <td><strong>学生姓名 Z (英文名 Z)</strong></td>
+            <td><mark style="background:#7c3aed;color:#fff;">B</mark></td>
+            <td><textarea placeholder="输入评语..."></textarea></td>
+            <td><input type="checkbox" aria-label="完成"></td>
+          </tr>
+          <tr class="row-done">
+            <td>27</td>
+            <td><div class="no-photo">📷</div></td>
+            <td><strong>学生姓名 Y (英文名 Y)</strong></td>
+            <td><mark style="background:#7c3aed;color:#fff;">B</mark></td>
+            <td><textarea>素描基础扎实，构图有进步。</textarea></td>
+            <td><input type="checkbox" checked aria-label="完成"></td>
+          </tr>
+        </tbody>
+      </table>
+    </figure>
+
+    <!-- ═══ 导出 ═══ -->
+    <div class="footer-actions">
+      <button class="secondary">按学生导出 (所有科目)</button>
+      <button>按当前科目导出</button>
+    </div>
+
+    <!-- ═══ 家长报告预览卡片 ═══ -->
+    <hr style="margin:2.5rem 0 1.5rem;">
+    <h2>👨‍👩‍👧 家长端 — 查看效果</h2>
+    <article style="max-width:600px; margin:0 auto;">
+      <header>
+        <h3>学生成绩报告 / Student Report Card</h3>
+        <p style="color:var(--pico-muted-color);">学生姓名 A (英文名 A) · S3FA 文商班</p>
+      </header>
+      <table class="striped">
+        <thead>
+          <tr>
+            <th scope="col">科目</th>
+            <th scope="col">评语</th>
+            <th scope="col">老师</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>华语</td>
+            <td>写作能力突出，阅读理解需加强。</td>
+            <td><small>华语老师</small></td>
+          </tr>
+          <tr>
+            <td>基数/普数/高数</td>
+            <td>计算速度快，应用题逻辑清晰。</td>
+            <td><small>数学老师</small></td>
+          </tr>
+          <tr>
+            <td>经济</td>
+            <td>概念掌握好，案例分析有条理。</td>
+            <td><small>经济老师</small></td>
+          </tr>
+          <tr>
+            <td>历史</td>
+            <td><em style="color:var(--pico-muted-color);">（待填写）</em></td>
+            <td><small>历史老师</small></td>
+          </tr>
+        </tbody>
+      </table>
+      <footer style="font-size:0.8rem; color:var(--pico-muted-color);">
+        ⚠️ 此报告为机密文件，仅供家长查看 | Generated by Hualian Report System
+      </footer>
+    </article>
+
+    <!-- ═══ 配色说明 ═══ -->
+    <hr style="margin:2rem 0 1rem;">
+    <details>
+      <summary>🎨 Pico.css 特性说明</summary>
+      <div class="grid" style="margin-top:1rem;">
+        <article>
+          <h5>✅ 自动暗色模式</h5>
+          <p>系统跟随浏览器设置，晚上自动变暗色。也可以手动切换 — 看左下角 →</p>
+        </article>
+        <article>
+          <h5>✅ 无类名设计</h5>
+          <p><code>&lt;table&gt;</code> <code>&lt;select&gt;</code> <code>&lt;textarea&gt;</code> 不写任何 class 就自动美化。加 <code>class="striped"</code> 就有斑马纹。</p>
+        </article>
+        <article>
+          <h5>✅ 响应式</h5>
+          <p>文字大小随屏幕自动缩放。手机看表格会自动横滚。</p>
+        </article>
+        <article>
+          <h5>✅ 6KB 极小</h5>
+          <p>家长页手机加载 0.1 秒内完成。</p>
+        </article>
+      </div>
+    </details>
+
+    <!-- ═══ 暗色模式切换按钮 ═══ -->
+    <nav style="position:fixed; bottom:1rem; left:1rem;">
+      <ul>
+        <li>
+          <a href="#" onclick="document.documentElement.dataset.theme =
+            document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark';
+            this.textContent = document.documentElement.dataset.theme === 'dark' ? '☀️ 亮色' : '🌙 暗色';
+            return false;" style="font-size:0.85rem;">🌙 暗色</a>
+        </li>
+      </ul>
+    </nav>
+
+  </main>
+</body>
+</html>

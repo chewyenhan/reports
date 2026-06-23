@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="zh" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>教师登录 — 华联中学评语系统</title>
+  <link rel="stylesheet" href="css/pico.min.css">
+  <style>
+    :root {
+      --pico-primary: #1a56db;
+      --pico-primary-background: #1a56db;
+      --pico-primary-hover: #1e40af;
+      --pico-primary-hover-background: #1e40af;
+    }
+    body {
+      min-height: 100vh;
+      display: flex; align-items: center; justify-content: center;
+      background: linear-gradient(135deg, #f0f4ff 0%, #e8f0fe 50%, #f8fafc 100%);
+    }
+    .login-card {
+      width: 100%; max-width: 420px;
+    }
+    .login-card header {
+      text-align: center;
+    }
+    .login-card h2 {
+      margin-bottom: 0.2rem;
+    }
+    .error-msg {
+      color: #dc2626; font-size: 0.9rem; margin-top: 0.5rem;
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <main class="container">
+    <article class="login-card">
+      <header>
+        <h2>🏫 华联中学评语系统</h2>
+        <p style="color: var(--pico-muted-color);">教师登录 / Teacher Login</p>
+      </header>
+
+      <form id="loginForm" onsubmit="handleSubmit(event)">
+        <label for="username">账号 / Username</label>
+        <select id="username" required>
+          <option value="" disabled selected>选择账号...</option>
+        </select>
+
+        <label for="password" style="margin-top:1rem;">密码 / Password</label>
+        <input type="password" id="password" placeholder="输入密码" required>
+
+        <div class="error-msg" id="errorMsg"></div>
+
+        <button type="submit" id="loginBtn" style="width:100%; margin-top:1.5rem;">
+          登录 / Login
+        </button>
+      </form>
+
+      <footer style="text-align:center; font-size:0.8rem; color:var(--pico-muted-color);">
+        如需重置密码，请联系班主任 | Contact form teacher for password reset
+      </footer>
+    </article>
+  </main>
+
+  <script src="js/auth.js"></script>
+  <script>
+    // 加载教师列表（从公开的 class-config API）
+    async function loadTeacherList() {
+      try {
+        // 先尝试从 /api/auth/me 恢复已登录状态
+        const auth = await checkAuth();
+        if (auth) {
+          redirectByRole(auth);
+          return;
+        }
+      } catch {}
+
+      // 未登录，等待用户选择
+      const sel = document.getElementById('username');
+      // 教师列表从后端获取（通过 login 接口返回错误消息里的线索...）
+      // 简化：硬编码教师选择列表（与 class-config.json 同步）
+      const teachers = [
+        { value: 'form_teacher', label: '👑 班主任' },
+        { value: 'chinese_t', label: '📖 华语老师' },
+        { value: 'malay_t', label: '📖 国语老师' },
+        { value: 'english_t', label: '📖 英语老师' },
+        { value: 'math_t', label: '🔢 数学老师（多人共享）' },
+        { value: 'computer_t', label: '💻 电脑老师' },
+        { value: 'pe_t', label: '🏃 体育老师' },
+        { value: 'robotics_t', label: '🤖 机器人老师' },
+        { value: 'commerce_t', label: '💼 商业老师' },
+        { value: 'economy_t', label: '📈 经济老师' },
+        { value: 'account_t', label: '🧮 会计老师' },
+        { value: 'history_t', label: '📜 历史老师' },
+        { value: 'geography_t', label: '🌏 地理老师' },
+        { value: 'art_t1', label: '🎨 美术老师（平面设计+素描）' },
+        { value: 'art_t2', label: '🎨 美术老师（综合创作+赏析+水彩）' },
+      ];
+      teachers.forEach(t => {
+        const opt = document.createElement('option');
+        opt.value = t.value;
+        opt.textContent = t.label;
+        sel.appendChild(opt);
+      });
+    }
+
+    function redirectByRole(authData) {
+      const role = authData.teacher ? authData.teacher.role : authData.role;
+      if (role === 'form_teacher') {
+        window.location.href = 'form-teacher.html';
+      } else {
+        window.location.href = 'teacher-report.html';
+      }
+    }
+
+    async function handleSubmit(e) {
+      e.preventDefault();
+      const username = document.getElementById('username').value;
+      const password = document.getElementById('password').value;
+      const btn = document.getElementById('loginBtn');
+      const errEl = document.getElementById('errorMsg');
+
+      btn.disabled = true;
+      btn.textContent = '登录中...';
+      errEl.style.display = 'none';
+
+      try {
+        const data = await login(username, password);
+        redirectByRole(data);
+      } catch (err) {
+        errEl.textContent = '❌ ' + err.message;
+        errEl.style.display = 'block';
+        btn.disabled = false;
+        btn.textContent = '登录 / Login';
+      }
+    }
+
+    loadTeacherList();
+  </script>
+</body>
+</html>
