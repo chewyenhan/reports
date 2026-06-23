@@ -1,3 +1,5 @@
+const API_BASE = 'https://hualianhistory-reports.chewyenhan.workers.dev';
+
 async function getMyReports() { return fetchWithAuth('/api/reports/my-subjects'); }
 async function saveReport(studentId, subjectCode, feedback, isComplete) {
   return fetchWithAuth('/api/reports/' + studentId + '/' + subjectCode, {
@@ -24,8 +26,8 @@ async function changePassword(oldPwd, newPwd) {
   });
 }
 async function getParentReport(code) {
-  const res = await fetch(WORKER_URL + '/api/parent/report/' + code); return res.json();
+  const res = await fetch(API_BASE + '/api/parent/report/' + code); return res.json();
 }
 async function getClassConfig() {
-  const res = await fetch(WORKER_URL + '/api/config/class'); return res.json();
+  const res = await fetch(API_BASE + '/api/config/class'); return res.json();
 }
