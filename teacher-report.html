@@ -17,7 +17,7 @@
     .progress-wrap { display:flex; align-items:center; gap:0.75rem; margin-bottom:1rem; }
     .progress-wrap progress { flex:1; height:14px; }
     .progress-label { font-weight:700; white-space:nowrap; min-width:4rem; text-align:center; font-size:0.95rem; }
-    .student-photo { width:60px; height:80px; object-fit:cover; border-radius:var(--pico-border-radius); border:1px solid var(--pico-muted-border-color); }
+    .student-photo { width:60px; height:80px; object-fit:contain; border-radius:var(--pico-border-radius); border:1px solid var(--pico-muted-border-color); }
     .no-photo { width:60px; height:80px; background:var(--pico-muted-border-color); border-radius:var(--pico-border-radius); display:inline-flex; align-items:center; justify-content:center; font-size:11px; color:var(--pico-muted-color); text-align:center; padding:4px; }
     tr.row-complete td { opacity:0.55; } tr.row-complete textarea { border-color:#86efac; background:#f0fdf4; }
     .save-indicator { font-size:0.85rem; color:var(--pico-muted-color); display:flex; align-items:center; gap:0.35rem; }
@@ -25,6 +25,20 @@
     .group-badge { display:inline-block; padding:1px 8px; border-radius:99px; font-size:0.75rem; font-weight:700; }
     .group-badge.A { background:#dbeafe; color:#1e40af; } .group-badge.B { background:#ede9fe; color:#6b21a8; }
     .site-footer { text-align:center; padding:2rem 1rem 1rem; font-size:0.8rem; color:var(--pico-muted-color); }
+  @media (max-width:576px){
+    main.container-fluid { padding:0.5rem 0.75rem 1rem !important; }
+    .lang-bar.container-fluid { padding:0.25rem 0.75rem !important; }
+    .top-bar { flex-direction:column; align-items:flex-start; gap:0.25rem; }
+    .top-bar h1 { font-size:1.15rem; }
+    .top-bar > div:last-child { width:100%; justify-content:space-between; }
+    .subject-tab { padding:0.35rem 0.6rem; font-size:0.8rem; }
+    table { font-size:0.82rem; }
+    th,td { padding:0.4rem 0.3rem !important; }
+    .student-photo { width:48px; height:64px; }
+    .no-photo { width:48px; height:64px; font-size:9px; }
+    textarea { font-size:0.85rem; min-height:50px; }
+    .save-indicator { font-size:0.75rem; }
+  }
   </style>
 </head>
 <body>
